@@ -15,7 +15,8 @@ namespace quic {
 class Bbr2Sender;
 class QUICHE_EXPORT Bbr2ProbeRttMode final : public Bbr2ModeBase {
  public:
-  using Bbr2ModeBase::Bbr2ModeBase;
+  Bbr2ProbeRttMode(const Bbr2Sender* sender, Bbr2NetworkModel* model)
+      : Bbr2ModeBase(sender, model) {}
 
   void Enter(QuicTime now,
              const Bbr2CongestionEvent* congestion_event) override;
