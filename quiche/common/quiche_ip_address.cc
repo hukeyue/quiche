@@ -9,6 +9,7 @@
 #include <cstring>
 #include <string>
 
+#include "net/asio.hpp"
 #include "absl/strings/str_cat.h"
 #include "quiche/common/platform/api/quiche_bug_tracker.h"
 #include "quiche/common/platform/api/quiche_logging.h"
@@ -113,8 +114,10 @@ std::string QuicheIpAddress::ToString() const {
   }
 
   char buffer[INET6_ADDRSTRLEN] = {0};
+  asio::error_code ec;
   const char* result =
-      inet_ntop(AddressFamilyToInt(), address_.bytes, buffer, sizeof(buffer));
+      asio::detail::socket_ops::inet_ntop(AddressFamilyToInt(),
+    address_.bytes, buffer, sizeof(buffer), 0, ec);
   QUICHE_BUG_IF(quiche_bug_10126_4, result == nullptr)
       << "Failed to convert an IP address to string";
   return buffer;
@@ -169,8 +172,9 @@ bool QuicheIpAddress::FromPackedString(const char* data, size_t length) {
 bool QuicheIpAddress::FromString(std::string str) {
   for (IpAddressFamily family :
        {IpAddressFamily::IP_V6, IpAddressFamily::IP_V4}) {
-    int result =
-        inet_pton(ToPlatformAddressFamily(family), str.c_str(), address_.bytes);
+    asio::error_code ec;
+    int result = asio::detail::socket_ops::inet_pton(
+        ToPlatformAddressFamily(family), str.c_str(), address_.bytes, 0, ec);
     if (result > 0) {
       family_ = family;
       return true;

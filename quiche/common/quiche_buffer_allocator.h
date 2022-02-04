@@ -64,7 +64,7 @@ inline QuicheUniqueBufferPtr MakeUniqueBuffer(QuicheBufferAllocator* allocator,
 // empty.
 class QUICHE_EXPORT QuicheBuffer {
  public:
-  QuicheBuffer() : buffer_(nullptr, QuicheBufferDeleter(nullptr)), size_(0) {}
+  QuicheBuffer() : buffer_(static_cast<char*>(nullptr), QuicheBufferDeleter(nullptr)), size_(0) {}
   QuicheBuffer(QuicheBufferAllocator* allocator, size_t size)
       : buffer_(MakeUniqueBuffer(allocator, size)), size_(size) {}
 

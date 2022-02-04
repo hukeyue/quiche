@@ -519,9 +519,13 @@ StatelessResetToken QuicUtils::GenerateStatelessResetToken(
                 "bad size");
   static_assert(alignof(absl::uint128) >= alignof(StatelessResetToken),
                 "bad alignment");
-  absl::uint128 hash = FNV1a_128_Hash(
+  union {
+    absl::uint128 hash;
+    StatelessResetToken token;
+  } data;
+  data.hash = FNV1a_128_Hash(
       absl::string_view(connection_id.data(), connection_id.length()));
-  return *reinterpret_cast<StatelessResetToken*>(&hash);
+  return data.token;
 }
 
 // static
