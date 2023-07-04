@@ -11,6 +11,32 @@
 #include "quiche/http2/adapter/http2_visitor_interface.h"
 #include "quiche/common/platform/api/quiche_export.h"
 
+// Followed by curl's nghttp adapter
+// Set the initial stream window size to 64KB and increase that to the 10MB~
+// we used to start with on the first server reply, unless a rate limit is~
+// in effect.~
+
+/* buffer dimensioning:
+ * use 16K as chunk size, as that fits H2 DATA frames well */
+#define H2_CHUNK_SIZE           (16 * 1024)
+/* connection window size */
+#define H2_CONN_WINDOW_SIZE     (10 * 1024 * 1024)
+/* on receiving from TLS, we prep for holding a full stream window */
+#define H2_NW_RECV_CHUNKS       (H2_CONN_WINDOW_SIZE / H2_CHUNK_SIZE)
+/* on send into TLS, we want to accumulate small frames */
+#define H2_NW_SEND_CHUNKS       1
+/* this is how much we want "in flight" for a stream, unthrottled */
+#define H2_STREAM_WINDOW_SIZE_MAX   (10 * 1024 * 1024)
+/* this is how much we want "in flight" for a stream, initially, IFF
+ * nghttp2 allows us to tweak the local window size. */
+#define H2_STREAM_WINDOW_SIZE_INITIAL  (64 * 1024)
+
+/* We need to accommodate the max number of streams with their window sizes on
+ * the overall connection. Streams might become PAUSED which will block their
+ * received QUOTA in the connection window. If we run out of space, the server
+ * is blocked from sending us any data. See #10988 for an issue with this. */
+#define HTTP2_HUGE_WINDOW_SIZE (100 * H2_STREAM_WINDOW_SIZE_MAX)
+
 namespace http2 {
 namespace adapter {
 
