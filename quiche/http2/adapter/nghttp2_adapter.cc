@@ -16,6 +16,9 @@
 #include "quiche/common/platform/api/quiche_logging.h"
 #include "quiche/common/quiche_endian.h"
 
+// followed by curl's nghttp adapter
+#define HTTP2_HUGE_WINDOW_SIZE (32 * 1024 * 1024) /* 32 MB */
+
 namespace http2 {
 namespace adapter {
 
@@ -146,6 +149,8 @@ void NgHttp2Adapter::SubmitSettings(absl::Span<const Http2Setting> settings) {
                     });
   nghttp2_submit_settings(session_->raw_ptr(), NGHTTP2_FLAG_NONE,
                           nghttp2_settings.data(), nghttp2_settings.size());
+  nghttp2_session_set_local_window_size(session_->raw_ptr(), NGHTTP2_FLAG_NONE, 0,
+                                        HTTP2_HUGE_WINDOW_SIZE);
 }
 
 void NgHttp2Adapter::SubmitPriorityForStream(Http2StreamId stream_id,
