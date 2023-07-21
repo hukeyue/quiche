@@ -28,6 +28,7 @@
 #define QUICHE_COMMON_QUICHE_CALLBACKS_H_
 
 #include <type_traits>
+#include <exception>
 
 #include "absl/functional/any_invocable.h"
 #include "absl/functional/function_ref.h"
