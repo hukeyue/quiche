@@ -378,7 +378,7 @@ void BalsaFrame::ProcessFirstLine(char* begin, char* end) {
           begin, end, is_request_, headers_, &last_error_,
           http_validation_policy().sanitize_cr_tab_in_first_line,
           http_validation_policy().sanitize_firstline_spaces)) {
-    parse_state_ = BalsaFrameEnums::ERROR;
+    parse_state_ = BalsaFrameEnums::PARSE_ERROR;
     HandleError(last_error_);
     return;
   }
@@ -404,7 +404,7 @@ void BalsaFrame::ProcessFirstLine(char* begin, char* end) {
     if (http_validation_policy().disallow_invalid_request_methods &&
         !is_method_valid) {
       QUICHE_CODE_COUNT(disallow_invalid_request_methods_enforced);
-      parse_state_ = BalsaFrameEnums::ERROR;
+      parse_state_ = BalsaFrameEnums::PARSE_ERROR;
       last_error_ = BalsaFrameEnums::INVALID_REQUEST_METHOD;
       HandleError(last_error_);
       return;
@@ -413,7 +413,7 @@ void BalsaFrame::ProcessFirstLine(char* begin, char* end) {
     is_valid_target_uri_ = IsValidTargetUri(part1, part2);
     if (http_validation_policy().disallow_invalid_target_uris &&
         !is_valid_target_uri_) {
-      parse_state_ = BalsaFrameEnums::ERROR;
+      parse_state_ = BalsaFrameEnums::PARSE_ERROR;
       last_error_ = BalsaFrameEnums::INVALID_TARGET_URI;
       HandleError(last_error_);
       return;
@@ -638,7 +638,7 @@ void BalsaFrame::HandleWarning(BalsaFrameEnums::ErrorCode error_code) {
 
 void BalsaFrame::HandleError(BalsaFrameEnums::ErrorCode error_code) {
   last_error_ = error_code;
-  parse_state_ = BalsaFrameEnums::ERROR;
+  parse_state_ = BalsaFrameEnums::PARSE_ERROR;
   visitor_->HandleError(last_error_);
 }
 
@@ -778,7 +778,7 @@ void BalsaFrame::ProcessHeaderLines(const Lines& lines, bool is_trailer,
     // for them.  However, first check for a formatting error, and skip
     // special header treatment on trailer lines (when is_trailer is true).
     if (key.empty() || key[0] == ' ') {
-      parse_state_ = BalsaFrameEnums::ERROR;
+      parse_state_ = BalsaFrameEnums::PARSE_ERROR;
       HandleError(is_trailer ? BalsaFrameEnums::INVALID_TRAILER_FORMAT
                              : BalsaFrameEnums::INVALID_HEADER_FORMAT);
       return;
@@ -970,7 +970,7 @@ size_t BalsaFrame::ProcessHeaders(const char* message_start,
           break;
         }
 
-        if (parse_state_ == BalsaFrameEnums::ERROR) {
+        if (parse_state_ == BalsaFrameEnums::PARSE_ERROR) {
           return message_current - original_message_start;
         }
       }
@@ -1024,7 +1024,7 @@ size_t BalsaFrame::ProcessHeaders(const char* message_start,
     // time to process the header lines (extract proper values for headers
     // which are important for framing).
     ProcessHeaderLines(lines_, false /*is_trailer*/, headers_);
-    if (parse_state_ == BalsaFrameEnums::ERROR) {
+    if (parse_state_ == BalsaFrameEnums::PARSE_ERROR) {
       return message_current - original_message_start;
     }
 
@@ -1052,7 +1052,7 @@ size_t BalsaFrame::ProcessHeaders(const char* message_start,
       continue;
     }
     AssignParseStateAfterHeadersHaveBeenParsed();
-    if (parse_state_ == BalsaFrameEnums::ERROR) {
+    if (parse_state_ == BalsaFrameEnums::PARSE_ERROR) {
       return message_current - original_message_start;
     }
     visitor_->ProcessHeaders(*headers_);
@@ -1165,7 +1165,7 @@ size_t BalsaFrame::ProcessInput(const char* input, size_t size) {
   }
 
   if (parse_state_ == BalsaFrameEnums::MESSAGE_FULLY_READ ||
-      parse_state_ == BalsaFrameEnums::ERROR) {
+      parse_state_ == BalsaFrameEnums::PARSE_ERROR) {
     // Can do nothing more 'till we're reset.
     return current - input;
   }
@@ -1478,7 +1478,7 @@ size_t BalsaFrame::ProcessInput(const char* input, size_t size) {
               trailers_->DoneWritingFromFramer();
               ProcessHeaderLines(trailer_lines_, true /*is_trailer*/,
                                  trailers_.get());
-              if (parse_state_ == BalsaFrameEnums::ERROR) {
+              if (parse_state_ == BalsaFrameEnums::PARSE_ERROR) {
                 return current - input;
               }
               visitor_->OnTrailers(std::move(trailers_));

@@ -9,7 +9,7 @@ namespace quiche {
 const char* BalsaFrameEnums::ParseStateToString(
     BalsaFrameEnums::ParseState error_code) {
   switch (error_code) {
-    case ERROR:
+    case PARSE_ERROR:
       return "ERROR";
     case READING_HEADER_AND_FIRSTLINE:
       return "READING_HEADER_AND_FIRSTLINE";
