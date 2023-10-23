@@ -157,7 +157,7 @@ class QUICHE_EXPORT BalsaFrame : public FramerInterface {
 
   BalsaFrameEnums::ParseState ParseState() const { return parse_state_; }
 
-  bool Error() const { return parse_state_ == BalsaFrameEnums::ERROR; }
+  bool Error() const { return parse_state_ == BalsaFrameEnums::PARSE_ERROR; }
 
   BalsaFrameEnums::ErrorCode ErrorCode() const { return last_error_; }
 
