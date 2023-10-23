@@ -356,7 +356,7 @@ void FirstLineParsedCorrectlyHelper(const char* tokens[3],
 
 TEST(HTTPBalsaFrame, ParseStateToString) {
   EXPECT_STREQ("ERROR",
-               BalsaFrameEnums::ParseStateToString(BalsaFrameEnums::ERROR));
+               BalsaFrameEnums::ParseStateToString(BalsaFrameEnums::PARSE_ERROR));
   EXPECT_STREQ("READING_HEADER_AND_FIRSTLINE",
                BalsaFrameEnums::ParseStateToString(
                    BalsaFrameEnums::READING_HEADER_AND_FIRSTLINE));
