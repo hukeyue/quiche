@@ -11,7 +11,7 @@ namespace quiche {
 
 struct QUICHE_EXPORT BalsaFrameEnums {
   enum ParseState : int {
-    ERROR,
+    PARSE_ERROR,
     READING_HEADER_AND_FIRSTLINE,
     READING_CHUNK_LENGTH,
     READING_CHUNK_EXTENSION,
