@@ -14,13 +14,23 @@ namespace callbacks {
 
 // A callback that returns DATA frame payload size and associated flags, given a
 // Http2VisitorInterface.
-ssize_t VisitorReadCallback(Http2VisitorInterface& visitor, int32_t stream_id,
-                            size_t max_length, uint32_t* data_flags);
+#if NGHTTP2_VERSION_NUM >= 0x013c00
+nghttp2_ssize
+#else
+ssize_t
+#endif
+VisitorReadCallback(Http2VisitorInterface& visitor, int32_t stream_id,
+                    size_t max_length, uint32_t* data_flags);
 
 // A callback that returns DATA frame payload size and associated flags, given a
 // DataFrameSource.
-ssize_t DataFrameSourceReadCallback(DataFrameSource& source, size_t length,
-                                    uint32_t* data_flags);
+#if NGHTTP2_VERSION_NUM >= 0x013c00
+nghttp2_ssize
+#else
+ssize_t
+#endif
+DataFrameSourceReadCallback(DataFrameSource& source, size_t length,
+                            uint32_t* data_flags);
 
 }  // namespace callbacks
 }  // namespace adapter
