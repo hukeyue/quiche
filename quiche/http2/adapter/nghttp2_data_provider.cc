@@ -9,8 +9,13 @@ namespace http2 {
 namespace adapter {
 namespace callbacks {
 
-ssize_t VisitorReadCallback(Http2VisitorInterface& visitor, int32_t stream_id,
-                            size_t max_length, uint32_t* data_flags) {
+#if NGHTTP2_VERSION_NUM >= 0x013c00
+nghttp2_ssize
+#else
+ssize_t
+#endif
+VisitorReadCallback(Http2VisitorInterface& visitor, int32_t stream_id,
+                    size_t max_length, uint32_t* data_flags) {
   *data_flags |= NGHTTP2_DATA_FLAG_NO_COPY;
   auto [payload_length, end_data, end_stream] =
       visitor.OnReadyToSendDataForStream(stream_id, max_length);
@@ -28,8 +33,13 @@ ssize_t VisitorReadCallback(Http2VisitorInterface& visitor, int32_t stream_id,
   return payload_length;
 }
 
-ssize_t DataFrameSourceReadCallback(DataFrameSource& source, size_t length,
-                                    uint32_t* data_flags) {
+#if NGHTTP2_VERSION_NUM >= 0x013c00
+nghttp2_ssize
+#else
+ssize_t
+#endif
+DataFrameSourceReadCallback(DataFrameSource& source, size_t length,
+                            uint32_t* data_flags) {
   *data_flags |= NGHTTP2_DATA_FLAG_NO_COPY;
   auto [result_length, done] = source.SelectPayloadLength(length);
   if (result_length == 0 && !done) {
