@@ -31,10 +31,15 @@ using ConnectionError = Http2VisitorInterface::ConnectionError;
 const size_t kFrameHeaderSize = 9;
 
 // A nghttp2-style `nghttp2_data_source_read_callback`.
-ssize_t DataFrameReadCallback(nghttp2_session* /* session */, int32_t stream_id,
-                              uint8_t* /* buf */, size_t length,
-                              uint32_t* data_flags, nghttp2_data_source* source,
-                              void* /* user_data */) {
+#if NGHTTP2_VERSION_NUM >= 0x013c00
+nghttp2_ssize
+#else
+ssize_t
+#endif
+DataFrameReadCallback(nghttp2_session* /* session */, int32_t stream_id,
+                      uint8_t* /* buf */, size_t length,
+                      uint32_t* data_flags, nghttp2_data_source* source,
+                      void* /* user_data */) {
   NgHttp2Adapter* adapter = reinterpret_cast<NgHttp2Adapter*>(source->ptr);
   return adapter->DelegateReadCallback(stream_id, length, data_flags);
 }
@@ -312,24 +317,42 @@ int32_t NgHttp2Adapter::SubmitRequest(
     std::unique_ptr<DataFrameSource> data_source, bool end_stream,
     void* stream_user_data) {
   auto nvs = GetNghttp2Nvs(headers);
+#if NGHTTP2_VERSION_NUM >= 0x013c00
+  std::unique_ptr<nghttp2_data_provider2> provider;
+#else
   std::unique_ptr<nghttp2_data_provider> provider;
+#endif
 
   if (data_source != nullptr || !end_stream) {
+#if NGHTTP2_VERSION_NUM >= 0x013c00
+    provider = std::make_unique<nghttp2_data_provider2>();
+#else
     provider = std::make_unique<nghttp2_data_provider>();
+#endif
     provider->source.ptr = this;
     provider->read_callback = &DataFrameReadCallback;
   }
 
-  int32_t stream_id =
+#if NGHTTP2_VERSION_NUM >= 0x013c00
+  int32_t result =
+      nghttp2_submit_request2(session_->raw_ptr(), nullptr, nvs.data(),
+                              nvs.size(), provider.get(), stream_user_data);
+#else
+  int32_t result =
       nghttp2_submit_request(session_->raw_ptr(), nullptr, nvs.data(),
                              nvs.size(), provider.get(), stream_user_data);
+#endif
   if (data_source != nullptr) {
-    sources_.emplace(stream_id, std::move(data_source));
+    sources_.emplace(result, std::move(data_source));
   }
   QUICHE_VLOG(1) << "Submitted request with " << nvs.size()
                  << " request headers and user data " << stream_user_data
-                 << "; resulted in stream " << stream_id;
-  return stream_id;
+                 << "; resulted in stream " << result;
+  if (result < 0) {
+    return result;
+  }
+  sources_.emplace(result, std::move(data_source));
+  return result;
 }
 
 int NgHttp2Adapter::SubmitResponse(Http2StreamId stream_id,
@@ -337,9 +360,17 @@ int NgHttp2Adapter::SubmitResponse(Http2StreamId stream_id,
                                    std::unique_ptr<DataFrameSource> data_source,
                                    bool end_stream) {
   auto nvs = GetNghttp2Nvs(headers);
+#if NGHTTP2_VERSION_NUM >= 0x013c00
+  std::unique_ptr<nghttp2_data_provider2> provider;
+#else
   std::unique_ptr<nghttp2_data_provider> provider;
+#endif
   if (data_source != nullptr || !end_stream) {
+#if NGHTTP2_VERSION_NUM >= 0x013c00
+    provider = std::make_unique<nghttp2_data_provider2>();
+#else
     provider = std::make_unique<nghttp2_data_provider>();
+#endif
     provider->source.ptr = this;
     provider->read_callback = &DataFrameReadCallback;
   }
@@ -347,8 +378,13 @@ int NgHttp2Adapter::SubmitResponse(Http2StreamId stream_id,
     sources_.emplace(stream_id, std::move(data_source));
   }
 
+#if NGHTTP2_VERSION_NUM >= 0x013c00
+  int result = nghttp2_submit_response2(session_->raw_ptr(), stream_id,
+                                        nvs.data(), nvs.size(), provider.get());
+#else
   int result = nghttp2_submit_response(session_->raw_ptr(), stream_id,
                                        nvs.data(), nvs.size(), provider.get());
+#endif
   QUICHE_VLOG(1) << "Submitted response with " << nvs.size()
                  << " response headers; result = " << result;
   return result;
@@ -388,9 +424,14 @@ void NgHttp2Adapter::RemoveStream(Http2StreamId stream_id) {
   sources_.erase(stream_id);
 }
 
-ssize_t NgHttp2Adapter::DelegateReadCallback(int32_t stream_id,
-                                             size_t max_length,
-                                             uint32_t* data_flags) {
+#if NGHTTP2_VERSION_NUM >= 0x013c00
+nghttp2_ssize
+#else
+ssize_t
+#endif
+NgHttp2Adapter::DelegateReadCallback(int32_t stream_id,
+                                     size_t max_length,
+                                     uint32_t* data_flags) {
   auto it = sources_.find(stream_id);
   if (it == sources_.end()) {
     // A DataFrameSource is not available for this stream; forward to the
