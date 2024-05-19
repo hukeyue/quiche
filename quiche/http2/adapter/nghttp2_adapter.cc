@@ -140,11 +140,13 @@ bool NgHttp2Adapter::IsServerSession() const {
 }
 
 int64_t NgHttp2Adapter::ProcessBytes(absl::string_view bytes) {
-  const int64_t processed_bytes = session_->ProcessBytes(bytes);
-  if (processed_bytes < 0) {
+  const int64_t status = session_->ProcessBytes(bytes);
+  if (nghttp2_is_fatal(status)) {
+    QUICHE_LOG(WARNING) << "nghttp2_session_mem_recv returned "
+                        << nghttp2_strerror(status);
     visitor_.OnConnectionError(ConnectionError::kParseError);
   }
-  return processed_bytes;
+  return status;
 }
 
 void NgHttp2Adapter::SubmitSettings(absl::Span<const Http2Setting> settings) {
@@ -250,8 +252,9 @@ void NgHttp2Adapter::SubmitMetadata(Http2StreamId stream_id,
 
 int NgHttp2Adapter::Send() {
   const int result = nghttp2_session_send(session_->raw_ptr());
-  if (result != 0) {
-    QUICHE_VLOG(1) << "nghttp2_session_send returned " << result;
+  if (nghttp2_is_fatal(result)) {
+    QUICHE_LOG(WARNING) << "nghttp2_session_send returned "
+                        << nghttp2_strerror(result);
     visitor_.OnConnectionError(ConnectionError::kSendError);
   }
   return result;
@@ -306,9 +309,10 @@ void NgHttp2Adapter::SubmitRst(Http2StreamId stream_id,
   int status =
       nghttp2_submit_rst_stream(session_->raw_ptr(), NGHTTP2_FLAG_NONE,
                                 stream_id, static_cast<uint32_t>(error_code));
-  if (status < 0) {
+  if (nghttp2_is_fatal(status)) {
     QUICHE_LOG(WARNING) << "Reset stream failed: " << stream_id
-                        << " with status code " << status;
+                        << " with status code " << nghttp2_strerror(status);
+    visitor_.OnConnectionError(ConnectionError::kSendError);
   }
 }
 
@@ -411,7 +415,13 @@ void* NgHttp2Adapter::GetStreamUserData(Http2StreamId stream_id) {
 }
 
 bool NgHttp2Adapter::ResumeStream(Http2StreamId stream_id) {
-  return 0 == nghttp2_session_resume_data(session_->raw_ptr(), stream_id);
+  int status = nghttp2_session_resume_data(session_->raw_ptr(), stream_id);
+  if (nghttp2_is_fatal(status)) {
+    QUICHE_LOG(WARNING) << "nghttp2_session_resume_data returned "
+                        << nghttp2_strerror(status);
+    visitor_.OnConnectionError(ConnectionError::kSendError);
+  }
+  return 0 == status;
 }
 
 void NgHttp2Adapter::FrameNotSent(Http2StreamId stream_id, uint8_t frame_type) {
