@@ -3816,7 +3816,7 @@ TEST(OgHttp2AdapterTest, ClientForbidsPushStream) {
 
 // This test verifies how oghttp2 behaves when a connection becomes
 // write-blocked while sending HEADERS.
-TEST(OgHttp2AdapterTest, ClientSubmitRequestWithWriteBlock) {
+TEST(OgHttp2AdapterTest, ClientSubmitRequestWithDataProviderAndWriteBlock) {
   TestVisitor visitor;
   OgHttp2Adapter::Options options;
   options.perspective = Perspective::kClient;
@@ -3836,6 +3836,8 @@ TEST(OgHttp2AdapterTest, ClientSubmitRequestWithWriteBlock) {
 
   const absl::string_view kBody = "This is an example request body.";
 
+  std::unique_ptr<DataFrameSource> frame_source =
+      std::make_unique<VisitorDataSource>(visitor, 1);
   visitor.AppendPayloadForStream(1, kBody);
   visitor.SetEndData(1, true);
   int stream_id =
@@ -3843,7 +3845,7 @@ TEST(OgHttp2AdapterTest, ClientSubmitRequestWithWriteBlock) {
                                         {":scheme", "http"},
                                         {":authority", "example.com"},
                                         {":path", "/this/is/request/one"}}),
-                             nullptr, false, nullptr);
+                             std::move(frame_source), false, nullptr);
   EXPECT_GT(stream_id, 0);
   EXPECT_TRUE(adapter->want_write());
 

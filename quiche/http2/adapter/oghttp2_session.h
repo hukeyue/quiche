@@ -117,8 +117,10 @@ class QUICHE_EXPORT OgHttp2Session : public Http2Session,
   int Send();
 
   int32_t SubmitRequest(absl::Span<const Header> headers,
+                        std::unique_ptr<DataFrameSource> data_source,
                         bool end_stream, void* user_data);
   int SubmitResponse(Http2StreamId stream_id, absl::Span<const Header> headers,
+                     std::unique_ptr<DataFrameSource> data_source,
                      bool end_stream);
   int SubmitTrailer(Http2StreamId stream_id, absl::Span<const Header> trailers);
   void SubmitMetadata(Http2StreamId stream_id,
@@ -255,6 +257,7 @@ class QUICHE_EXPORT OgHttp2Session : public Http2Session,
           send_window(stream_send_window) {}
 
     WindowManager window_manager;
+    std::unique_ptr<DataFrameSource> outbound_body;
     std::unique_ptr<quiche::HttpHeaderBlock> trailers;
     void* user_data = nullptr;
     int32_t send_window;
@@ -272,6 +275,7 @@ class QUICHE_EXPORT OgHttp2Session : public Http2Session,
 
   struct QUICHE_EXPORT PendingStreamState {
     quiche::HttpHeaderBlock headers;
+    std::unique_ptr<DataFrameSource> data_source;
     void* user_data = nullptr;
     bool end_stream;
   };
@@ -379,6 +383,14 @@ class QUICHE_EXPORT OgHttp2Session : public Http2Session,
   // streams, returns zero.
   Http2StreamId GetNextReadyStream();
 
+  int32_t SubmitRequestInternal(absl::Span<const Header> headers,
+                                std::unique_ptr<DataFrameSource> data_source,
+                                bool end_stream, void* user_data);
+  int SubmitResponseInternal(Http2StreamId stream_id,
+                             absl::Span<const Header> headers,
+                             std::unique_ptr<DataFrameSource> data_source,
+                             bool end_stream);
+
   // Sends the buffered connection preface or serialized frame data, if any.
   SendResult MaybeSendBufferedData();
 
@@ -416,6 +428,7 @@ class QUICHE_EXPORT OgHttp2Session : public Http2Session,
   // Creates a stream for `stream_id`, stores the `data_source` and `user_data`
   // in the stream state, and sends the `headers`.
   void StartRequest(Http2StreamId stream_id, quiche::HttpHeaderBlock headers,
+                    std::unique_ptr<DataFrameSource> data_source,
                     void* user_data, bool end_stream);
 
   // Sends headers for pending streams as long as the stream limit allows.
