@@ -709,6 +709,10 @@ BinaryHttpRequest::IndeterminateLengthDecoder::DecodeCheckpointData(
       }
       return absl::OkStatus();
     }
+    default: {
+      return absl::InternalError(
+        absl::StrFormat("Unsupported Section State: 0x%02x", current_section_));
+    }
   }
   // This should never happen because current_section_ is private and we only
   // ever set it to values handled by the switch statement above.
