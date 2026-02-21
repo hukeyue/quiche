@@ -610,6 +610,10 @@ BinaryHttpRequest::IndeterminateLengthDecoder::DecodeCheckpointData(
       }
       return absl::OkStatus();
     }
+    default: {
+      return absl::InternalError(
+        absl::StrFormat("Unsupported Section State: 0x%02x", current_section_));
+    }
   }
 }
 
