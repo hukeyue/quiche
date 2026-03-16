@@ -16,11 +16,6 @@
 #include "quiche/common/platform/api/quiche_logging.h"
 #include "quiche/common/quiche_endian.h"
 
-// followed by curl's nghttp adapter
-/* this is how much we want "in flight" for a stream */
-#define H2_STREAM_WINDOW_SIZE   (10 * 1024 * 1024)
-#define HTTP2_HUGE_WINDOW_SIZE (100 * H2_STREAM_WINDOW_SIZE)
-
 namespace http2 {
 namespace adapter {
 
