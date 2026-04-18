@@ -17,6 +17,9 @@
 #include "quiche/common/platform/api/quiche_export.h"
 #include "quiche/common/quiche_text_utils.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-attributes"
+
 namespace http2 {
 
 // TODO(jamessynge): create http2_simple_types for types similar to
@@ -59,6 +62,7 @@ inline bool IsSupportedHttp2FrameType(Http2FrameType v) {
 // the functions later in this file.
 QUICHE_EXPORT std::string Http2FrameTypeToString(Http2FrameType v);
 QUICHE_EXPORT std::string Http2FrameTypeToString(uint8_t v);
+
 QUICHE_EXPORT inline std::ostream& operator<<(std::ostream& out,
                                               Http2FrameType v) {
   return out << Http2FrameTypeToString(v);
@@ -266,5 +270,7 @@ using InvalidHeaderSet =
 QUICHE_EXPORT const InvalidHeaderSet& GetInvalidHttp2HeaderSet();
 
 }  // namespace http2
+
+#pragma clang diagnostic pop
 
 #endif  // QUICHE_HTTP2_CORE_HTTP2_CONSTANTS_H_

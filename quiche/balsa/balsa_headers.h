@@ -1230,6 +1230,8 @@ class QUICHE_EXPORT BalsaHeaders::iterator_base {
     return it <= *this;
   }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-attributes"
   // This mainly exists so that we can have interesting output for
   // unittesting. The EXPECT_EQ, EXPECT_NE functions require that
   // operator<< work for the classes it sees.  It would be better if there
@@ -1240,6 +1242,7 @@ class QUICHE_EXPORT BalsaHeaders::iterator_base {
     os << "[" << it.headers_ << ", " << it.idx_ << "]";
     return os;
   }
+#pragma clang diagnostic pop
 
  private:
   friend class BalsaHeaders;
@@ -1333,6 +1336,10 @@ class QUICHE_EXPORT BalsaHeaders::const_header_lines_key_iterator
   absl::string_view key_;
 };
 
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-attributes"
+
 inline BalsaHeaders::iterator_range<BalsaHeaders::const_header_lines_iterator>
 BalsaHeaders::lines() const {
   return {HeaderLinesBeginHelper<const_header_lines_iterator>(),
@@ -1355,6 +1362,8 @@ inline void BalsaHeaders::erase(const const_header_lines_iterator& it) {
   QUICHE_DCHECK_LT(it.idx_, header_lines_.size());
   header_lines_[it.idx_].skip = true;
 }
+
+#pragma clang diagnostic pop
 
 template <typename Buffer>
 void BalsaHeaders::WriteToBuffer(Buffer* buffer, CaseOption case_option,
@@ -1386,6 +1395,8 @@ void BalsaHeaders::WriteToBuffer(Buffer* buffer, CaseOption case_option,
   }
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-attributes"
 inline void BalsaHeaders::GetValuesOfMultivaluedHeaders(
     const MultivaluedHeadersSet& multivalued_headers,
     MultivaluedHeadersValuesMap* multivalues) const {
@@ -1409,6 +1420,7 @@ inline void BalsaHeaders::GetValuesOfMultivaluedHeaders(
     }
   }
 }
+#pragma clang diagnostic pop
 
 template <typename Buffer>
 void BalsaHeaders::WriteToBufferCoalescingMultivaluedHeaders(
