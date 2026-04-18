@@ -35,6 +35,9 @@
 #include "quiche/common/platform/api/quiche_export.h"
 #include "quiche/common/platform/api/quiche_logging.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-attributes"
+
 namespace http2 {
 
 struct QUICHE_EXPORT Http2FrameHeader {
@@ -335,6 +338,7 @@ struct QUICHE_EXPORT Http2PriorityUpdateFields {
 
 QUICHE_EXPORT bool operator==(const Http2PriorityUpdateFields& a,
                               const Http2PriorityUpdateFields& b);
+
 QUICHE_EXPORT inline bool operator!=(const Http2PriorityUpdateFields& a,
                                      const Http2PriorityUpdateFields& b) {
   return !(a == b);
@@ -343,5 +347,7 @@ QUICHE_EXPORT std::ostream& operator<<(std::ostream& out,
                                        const Http2PriorityUpdateFields& v);
 
 }  // namespace http2
+
+#pragma clang diagnostic pop
 
 #endif  // QUICHE_HTTP2_CORE_HTTP2_STRUCTURES_H_
