@@ -74,17 +74,17 @@ class QUICHE_EXPORT Item {
   struct string_t {
     constexpr explicit string_t() = default;
   };
-  inline static constexpr string_t string;
+  inline static constinit string_t string {};
 
   struct token_t {
     constexpr explicit token_t() = default;
   };
-  inline static constexpr token_t token;
+  inline static constexpr token_t token {};
 
   struct byte_sequence_t {
     constexpr explicit byte_sequence_t() = default;
   };
-  inline static constexpr byte_sequence_t byte_sequence;
+  inline static constexpr byte_sequence_t byte_sequence {};
 
   Item();
   explicit Item(int64_t value);
